@@ -1,10 +1,10 @@
 from pydantic import BaseModel
 
-class CreateUserSchema(BaseModel):
+class UserCreate(BaseModel):
     name: str
     email: str
     
-class UserResponseSchema(BaseModel):
+class UserRead(BaseModel):
     id: int
     name: str
     email: str

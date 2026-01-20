@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from routes import general
+from routes import general_routes, users_routes
 from database import engine, Base
 from models import users
 
@@ -22,7 +22,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(general.general_router)
+app.include_router(general_routes.general_router)
+app.include_router(users_routes.users_router)
 
 if __name__ == "__main__":
     uvicorn.run("app:app", reload=True)
