@@ -10,7 +10,7 @@ from database import engine, Base
 from models import users_model
 
 # database setup
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 # app setup
 app = FastAPI(title="sql alchemy")
