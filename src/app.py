@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 from routes import general_routes, users_routes
 from database import engine, Base
-from models import users
+from models import users_model
 
 # database setup
 Base.metadata.create_all(bind=engine)

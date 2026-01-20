@@ -1,5 +1,5 @@
-from schemas.users import UserCreate, UserRead
-from models.users import User
+from schemas.users_schemas import UserCreate, UserRead
+from models.users_model import User
 from database import get_db
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
