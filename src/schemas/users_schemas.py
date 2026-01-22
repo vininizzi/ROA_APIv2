@@ -22,6 +22,15 @@ class UserRead(BaseModel):
     class Config:
         orm_mode = True
         from_attributes = True
+
+class UserPaginated(BaseModel):
+    total: int
+    page: int
+    limit: int
+    users: list[UserRead]
+
+    class Config:
+        from_attributes = True
         
 class Token(BaseModel):
     access_token: str

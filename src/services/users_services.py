@@ -28,3 +28,17 @@ def create_user_service(db: Session, user_data: UserCreate):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+def get_all_users_service(db: Session, page: int, limit: int):
+    offset = (page - 1) * limit
+    
+    total_count = db.query(User).count()
+    
+    users = db.query(User).offset(offset).limit(limit).all()
+    
+    return {
+        "total": total_count,
+        "page": page,
+        "limit": limit,
+        "users": users
+    }
