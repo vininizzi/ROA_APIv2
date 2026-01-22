@@ -1,10 +1,12 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from ROA.vectorstore_manager import load_vectorstore, add_chunks
 from ROA.services import answer_question
 from ROA.docling_utils import process_pdf
 from schemas.ROA_schemas import ChatRequest, ChatResponse
 import os
 import shutil
+from core.security import get_current_user
+from models.users_model import User
 
 ROA_router = APIRouter(prefix="/ROA", tags=["ROA"])
 
@@ -23,7 +25,9 @@ PDF_BASE = (
 )
 
 @ROA_router.post("/chat", response_model=ChatResponse)
-def chat(req: ChatRequest):
+def chat(req: ChatRequest,
+    # current_user: User = Depends(get_current_user)
+):
     answer = answer_question(req.question)
     return {"answer": answer}
 
