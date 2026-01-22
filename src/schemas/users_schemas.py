@@ -2,15 +2,19 @@ from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime
 
+from models.users_model import UserRole
+
 class UserCreate(BaseModel):
     name: str
     email: str
     password: str
+    role: Optional[UserRole] = UserRole.USER
     
 class UserRead(BaseModel):
     id: int
     name: str
     email: str
+    role: UserRole
     is_active: bool
     created_at: datetime
     updated_at: Optional[datetime] = None

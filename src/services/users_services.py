@@ -7,7 +7,8 @@ def create_user_service(db: Session, user_data: UserCreate):
     db_user = User(
         name=user_data.name, 
         email=user_data.email,
-        hashed_password=hash_password(user_data.password)
+        hashed_password=hash_password(user_data.password),
+        role=user_data.role
     )
     db.add(db_user)
     db.commit()
