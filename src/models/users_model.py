@@ -1,4 +1,5 @@
 import enum
+import uuid
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Enum
 from sqlalchemy.sql import func
 from database import Base
@@ -10,7 +11,7 @@ class UserRole(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
+    id = Column(String(36), primary_key=True, index=True, default=lambda: str(uuid.uuid4()))
     name = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     role = Column(Enum(UserRole), default=UserRole.USER, nullable=False)

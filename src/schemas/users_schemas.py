@@ -11,7 +11,7 @@ class UserCreate(BaseModel):
     role: Optional[UserRole] = UserRole.USER
     
 class UserRead(BaseModel):
-    id: int
+    id: str
     name: str
     email: str
     role: UserRole
