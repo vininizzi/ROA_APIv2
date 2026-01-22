@@ -2,9 +2,13 @@ from sqlalchemy.orm import Session
 from models.users_model import User
 from schemas.users_schemas import UserCreate
 from core.security import hash_password, verify_password
+from sqlalchemy import or_
 
-def authenticate_user(db: Session, email: str, password: str):
-    user = db.query(User).filter(User.email == email).first()
+def authenticate_user(db: Session, login_id: str, password: str):
+    user = db.query(User).filter(
+        or_(User.email == login_id, User.name == login_id)
+    ).first()
+    
     if not user:
         return False
     
