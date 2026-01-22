@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Path
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from fastapi import Query
@@ -9,7 +9,7 @@ from services.users_services import create_user_service, authenticate_user
 from core.security import create_access_token
 from core.security import get_current_user
 from schemas.users_schemas import UserPaginated
-from services.users_services import get_all_users_service
+from services.users_services import get_all_users_service, get_user_by_id_service
 from models.users_model import User
 
 users_router = APIRouter(prefix="/users", tags=["users"])
@@ -39,3 +39,11 @@ def get_users(
     current_user: User = Depends(get_current_user)
 ):
     return get_all_users_service(db, page=page, limit=limit)
+
+@users_router.get("/{user_id}", response_model=UserRead)
+def get_user(
+    user_id: str = Path(..., description="The ID of the user to retrieve"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return get_user_by_id_service(db=db, user_id=user_id)

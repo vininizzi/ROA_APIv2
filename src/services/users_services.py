@@ -3,6 +3,7 @@ from models.users_model import User
 from schemas.users_schemas import UserCreate
 from core.security import hash_password, verify_password
 from sqlalchemy import or_
+from fastapi import HTTPException, status
 
 def authenticate_user(db: Session, login_id: str, password: str):
     user = db.query(User).filter(
@@ -42,3 +43,13 @@ def get_all_users_service(db: Session, page: int, limit: int):
         "limit": limit,
         "users": users
     }
+
+def get_user_by_id_service(db: Session, user_id: str):
+    """Fetches a user by their ID."""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with id {user_id} not found"
+        )
+    return user
