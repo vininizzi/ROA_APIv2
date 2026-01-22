@@ -4,12 +4,12 @@ from sqlalchemy.orm import Session
 from fastapi import Query
 
 from database import get_db
-from schemas.users_schemas import UserCreate, UserRead, Token
+from schemas.users_schemas import UserCreate, UserRead, Token, UserUpdate
 from services.users_services import create_user_service, authenticate_user
 from core.security import create_access_token
 from core.security import get_current_user
 from schemas.users_schemas import UserPaginated
-from services.users_services import get_all_users_service, get_user_by_id_service
+from services.users_services import get_all_users_service, get_user_by_id_service, update_user_service, soft_delete_user_service
 from models.users_model import User
 
 users_router = APIRouter(prefix="/users", tags=["users"])
@@ -47,3 +47,20 @@ def get_user(
     current_user: User = Depends(get_current_user)
 ):
     return get_user_by_id_service(db=db, user_id=user_id)
+
+@users_router.patch("/{user_id}", response_model=UserRead)
+def update_user(
+    user_id: str,
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return update_user_service(db=db, user_id=user_id, update_data=user_update)
+
+@users_router.delete("/{user_id}", response_model=UserRead)
+def soft_delete_user(
+    user_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    return soft_delete_user_service(db=db, user_id=user_id)

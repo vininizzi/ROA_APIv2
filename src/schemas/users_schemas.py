@@ -31,7 +31,13 @@ class UserPaginated(BaseModel):
 
     class Config:
         from_attributes = True
-        
+
+class UserUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+
 class Token(BaseModel):
     access_token: str
     token_type: str
