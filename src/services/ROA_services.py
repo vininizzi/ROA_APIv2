@@ -4,6 +4,7 @@ from ROA.vectorstore_manager import similarity_search, get_vectorstore
 
 
 def answer_question(question: str) -> str:
+    print("###########services do Nata#######")
     """
     Responde uma pergunta usando a base de conhecimento persistente.
 

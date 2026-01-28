@@ -6,8 +6,9 @@ from langchain_community.chat_models import ChatOllama
 from ROA.prompt_builder import build_prompt
 from ROA.intent_classifier import classify_intent
 from ROA.language import get_out_of_context_message
+#from ROA.language import detect_language, normalize_language
+from ROA.llm_language import detect_language_llm
 
-from ROA.language import detect_language, normalize_language
 
 print("PIPELINE LOADED FROM:", __file__)
 
@@ -16,11 +17,21 @@ def run_pipeline(
     retriever,
     language: str | None = None
 ):
+
+    model = ChatOllama(
+        model="gemma3:1b",
+        temperature=0.2
+    )
     # Detecta idioma se não informado
+    '''
     if language is None:
         lang_code = detect_language(question)
         language = normalize_language(lang_code)
-
+    '''
+    #detecta o idioma usando llm se n for informado
+    if language is None:
+        language = detect_language_llm(question, model)
+        
     # Classificação de intenção (para controle do prompt)
     intent = classify_intent(question)
 

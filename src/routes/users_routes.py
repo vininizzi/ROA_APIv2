@@ -12,7 +12,7 @@ from schemas.users_schemas import UserPaginated
 from services.users_services import get_all_users_service, get_user_by_id_service, update_user_service, soft_delete_user_service
 from models.users_model import User
 
-users_router = APIRouter(prefix="/users", tags=["users"])
+users_router = APIRouter(prefix="/ROA", tags=["users"])
 
 @users_router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
@@ -27,7 +27,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
     access_token = create_access_token(data={"sub": user.email})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@users_router.post("/", response_model=UserRead)
+@users_router.post("/register", response_model=UserRead)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
     return create_user_service(db=db, user_data=user)
 

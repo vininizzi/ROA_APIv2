@@ -1,10 +1,12 @@
 from ROA.pipeline import run_pipeline
-from ROA.language import detect_language, normalize_language
+#from ROA.language import detect_language, normalize_language
+from ROA.llm_language import detect_language_llm
 from ROA.vectorstore_manager import similarity_search, get_vectorstore
 
 
-def answer_question(question: str) -> str:
-    """
+#def answer_question(question: str) -> str:
+
+"""
     Responde uma pergunta usando a base de conhecimento persistente.
 
     A função:
@@ -12,7 +14,7 @@ def answer_question(question: str) -> str:
     - Recupera documentos relevantes via VectorStore
     - Executa o pipeline RAG
     """
-
+'''
     # 1. Detecta e normaliza idioma
     lang_code = detect_language(question)
     language = normalize_language(lang_code)
@@ -25,6 +27,20 @@ def answer_question(question: str) -> str:
         question=question,
         retriever=vector_store.as_retriever(search_kwargs={"k": 8}),
         language=language
+    )
+
+    return answer
+    '''
+    
+
+def answer_question(question: str) -> str:
+    print("#########services do ROA##############")
+    vector_store = get_vectorstore()
+
+    answer = run_pipeline(
+        question=question,
+        retriever=vector_store.as_retriever(search_kwargs={"k": 8}),
+        language=None  # deixa o pipeline detectar com LLM
     )
 
     return answer

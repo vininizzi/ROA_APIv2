@@ -14,7 +14,6 @@ Adições:
 
 from typing import List, Tuple
 
-
 def _system_text(intent: str, language: str = "English") -> str:
     """
     Texto base do system prompt.
