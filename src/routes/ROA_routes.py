@@ -46,13 +46,16 @@ def upload_pdf(file: UploadFile = File(...), db: Session = Depends(get_db)):
 
         logger.info("📄 [UPLOAD] Iniciando processamento do PDF")
         chunks, document_index = process_pdf(file_path)
+        
 
         doc_id = chunks[0].metadata.get("doc_id", str(uuid.uuid4()))
         add_chunks(chunks)
         logger.info(f"✅ [INGEST] FAISS atualizado com {len(chunks)} chunks")
 
         # Mapeando metadados do PDF para o modelo SQLAlchemy
+        
         metadata_dict = chunks[0].metadata  # assumindo que os metadados estão no primeiro chunk
+        
         metadata_mapped = {
             "doc_id": doc_id,
             "producer": metadata_dict.get("producer"),
