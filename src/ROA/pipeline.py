@@ -6,7 +6,6 @@ from langchain_community.chat_models import ChatOllama
 from ROA.prompt_builder import build_prompt
 from ROA.intent_classifier import classify_intent
 from ROA.language import get_out_of_context_message
-#from ROA.language import detect_language, normalize_language
 from ROA.llm_language import detect_language_llm
 
 
@@ -43,9 +42,12 @@ def run_pipeline(
 
     # Monta contexto final com os primeiros 8 chunks
     context = "\n\n".join(
-        f"==Chunk {c.metadata['chunk_id']}==\n{c.page_content}"
+        f"==Fonte: {c.metadata.get('source', 'N/A')} | "
+        f"Página: {c.metadata.get('page', 'N/A')}==\n"
+        f"{c.page_content}"
         for c in retrieved[:8]
     )
+
 
     # Construção do prompt
     messages = build_prompt(context, question, intent, language)

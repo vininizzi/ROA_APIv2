@@ -1,92 +1,112 @@
 import os
-from langchain_community.vectorstores.faiss import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
+import pickle
+import logging
+from typing import List, Optional
 
-# ===== CONFIGURAÇÃO =====
+from langchain_core.documents import Document
+from langchain_community.vectorstores import FAISS
+from langchain_openai import OpenAIEmbeddings
+
+logger = logging.getLogger("ROA")
+
+# ================= CONFIG =================
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "data")
+VECTORSTORE_PATH = os.path.join(DATA_DIR, "faiss_store.pkl")
 
-VECTORSTORE_DIR = os.path.join(BASE_DIR, "vectorstore")
-INDEX_NAME = "roa_faiss_index"
+# ================= SINGLETON =================
+
+_vectorstore: Optional[FAISS] = None
+
+# ================= EMBEDDINGS =================
+
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 
-# ===== SINGLETONS =====
-
-_vectorstore = None
 _embeddings = None
 
-
-# ===== FUNÇÕES INTERNAS =====
-
-def _get_embeddings():
+def get_embeddings():
     global _embeddings
     if _embeddings is None:
+        print("🧬 [EMBEDDINGS] HuggingFace local")
         _embeddings = HuggingFaceEmbeddings(model_name=EMBEDDING_MODEL)
     return _embeddings
+# ================= LOAD / SAVE =================
 
-
-def _index_exists() -> bool:
-    return os.path.exists(os.path.join(VECTORSTORE_DIR, INDEX_NAME))
-
-
-# ===== API PÚBLICA =====
-
-def load_vectorstore():
+def load_vectorstore() -> Optional[FAISS]:
     """
-    Carrega o índice FAISS persistido ou cria um novo vazio.
-    Deve ser chamado UMA vez no startup.
+    Carrega o vectorstore do disco (startup).
     """
     global _vectorstore
 
-    embeddings = _get_embeddings()
-    os.makedirs(VECTORSTORE_DIR, exist_ok=True)
+    if _vectorstore is not None:
+        logger.debug("📦 Vectorstore já carregado em memória")
+        return _vectorstore
 
-    if _index_exists():
-        print("Carregando índice FAISS existente...")
-        _vectorstore = FAISS.load_local(
-            VECTORSTORE_DIR,
-            embeddings,
-            index_name=INDEX_NAME,
-            allow_dangerous_deserialization=True,
-        )
-    else:
-        print("Nenhum índice FAISS encontrado. Será criado na primeira ingestão.")
-        _vectorstore = None
+    if not os.path.exists(VECTORSTORE_PATH):
+        logger.warning("📦 Nenhum vectorstore encontrado em disco")
+        return None
 
+    with open(VECTORSTORE_PATH, "rb") as f:
+        _vectorstore = pickle.load(f)
 
+    logger.info("📦 Vectorstore carregado do disco")
     return _vectorstore
 
 
-def get_vectorstore():
+def _save_vectorstore():
+    if _vectorstore is None:
+        logger.error("❌ Tentativa de salvar vectorstore inexistente")
+        return
+
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+    with open(VECTORSTORE_PATH, "wb") as f:
+        pickle.dump(_vectorstore, f)
+
+    logger.info("💾 Vectorstore salvo em disco")
+
+# ================= API PÚBLICA =================
+
+def get_vectorstore() -> FAISS:
     if _vectorstore is None:
         raise RuntimeError(
-            "VectorStore ainda não inicializado. "
-            "Nenhum documento foi ingerido."
+            "Vectorstore não inicializado. Nenhum documento ingerido ainda."
         )
     return _vectorstore
 
 
-
-def add_chunks(chunks):
+def add_chunks(chunks: List[Document]):
+    """
+    Cria ou adiciona chunks ao FAISS.
+    """
     global _vectorstore
 
-    embeddings = _get_embeddings()
+    if not chunks:
+        raise ValueError("Lista de chunks vazia")
+
+    logger.info(f"🧠 [VECTORSTORE] Recebidos {len(chunks)} chunks")
+
+    embeddings = get_embeddings()
 
     if _vectorstore is None:
-        print("Criando índice FAISS com primeiros chunks...")
+        logger.info("🧠 [VECTORSTORE] Criando novo FAISS index")
         _vectorstore = FAISS.from_documents(chunks, embeddings)
     else:
+        logger.info("🧠 [VECTORSTORE] Adicionando documentos ao FAISS existente")
         _vectorstore.add_documents(chunks)
 
-    _vectorstore.save_local(VECTORSTORE_DIR, INDEX_NAME)
-    print(f"{len(chunks)} chunks adicionados ao índice.")
+    _save_vectorstore()
 
+    logger.info(f"✅ [VECTORSTORE] {len(chunks)} chunks processados")
 
 
 def similarity_search(query: str, k: int = 4):
     """
-    Busca semântica no índice.
+    Busca semântica (RAG).
     """
+    logger.info(f"🔍 [SEARCH] Query: {query}")
     vs = get_vectorstore()
     return vs.similarity_search(query, k=k)
