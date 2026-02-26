@@ -1,87 +1,54 @@
-import os
-# 🔥 FORÇA CPU — mata o problema de vez
-#os.environ["CUDA_VISIBLE_DEVICES"] = ""
-#os.environ["OMP_NUM_THREADS"] = "1"
-#os.environ["MKL_NUM_THREADS"] = "1"
-
 from docling.document_converter import DocumentConverter
-
-print("==== Debug 1 ====")
-print("PID:", os.getpid())
-
-# ⚠️ Ideal mover depois para config/env
-PROJECT_ROOT = (
-    "/home/brain/projects/RAG para PDFs/"
-    "RAG com OCR do Vini/"
-    "ROA - RAG com OCR Academico"
-)
-
-DOCUMENTS_DIR = os.path.join(PROJECT_ROOT, "Documentos")
+import os
 
 
-def process_pdf(pdf_name: str):
+def process_pdf(pdf_path: str) -> str:
     """
-    Executa APENAS OCR e extração estrutural com Docling.
-    Retorna texto linearizado + metadados do documento.
-    NÃO faz chunking.
-    NÃO faz indexação.
+    Executa OCR e extração de texto com Docling.
+    Recebe o CAMINHO COMPLETO do PDF.
+    Retorna APENAS o texto.
     """
-
-    pdf_path = os.path.join(DOCUMENTS_DIR, pdf_name)
 
     if not os.path.isfile(pdf_path):
         raise FileNotFoundError(f"PDF não encontrado: {pdf_path}")
 
-    # =========================================================
-    # 1️⃣ Conversão com Docling
-    # =========================================================
-    print("==== Debug 2 ====")
-    print("PID:", os.getpid())
-    
+    print("=========== DOCLING ==========")
+    print(f"Processando arquivo: {pdf_path}")
+
     converter = DocumentConverter()
     result = converter.convert(pdf_path)
 
     if result.status != "success":
-        raise RuntimeError(
-            f"Falha na conversão do documento: {result.errors}"
-        )
+        raise RuntimeError(f"Falha na conversão: {result.errors}")
 
     doc = result.document
-
-    # =========================================================
-    # 2️⃣ Metadados NATIVOS (Docling)
-    # =========================================================
-    #num_pages = doc.num_pages() if callable(doc.num_pages) else doc.num_pages
-
-    native_metadata: dict[str, str] = {
-        "doc_name": doc.name,
-        "origin_filename": doc.origin.filename,
-        "mimetype": doc.origin.mimetype,
-        #"num_pages": num_pages,
-        "docling_version": doc.version,
-        "num_text_blocks": len(doc.texts),
-        "num_tables": len(doc.tables),
-        "num_images": len(doc.pictures),
-    }
-
-    # =========================================================
-    # 3️⃣ Extração de TEXTO (linearizado)
-    # =========================================================
     text = doc.export_to_text()
 
+    # ======================================
+    # DEBUG DESATIVADO (preview curto)
+    # ======================================
+    # print("=========== OCR RESULT ==========")
+    # print(text[:1000])
+    # print("Tamanho do texto:", len(text))
+
+    # ======================================
+    # DEBUG COMPLETO (PRINT TOTAL)
+    # ⚠️ Use só para arquivos pequenos
+    # ======================================
+    #print("=========== OCR FULL TEXT ==========")
+    #print(text)
+
+    # ======================================
+    # SALVAR TEXTO BRUTO EM ARQUIVO .txt
+    # ======================================
+    # txt_path = pdf_path + ".ocr.txt"
+    # with open(txt_path, "w", encoding="utf-8") as f:
+    #     f.write(text)
+
+    # print(f"📄 Texto OCR salvo em: {txt_path}")
+    # print("Tamanho total do texto:", len(text))
+
     if not isinstance(text, str) or not text.strip():
-        raise ValueError("Texto extraído está vazio ou inválido.")
+        raise ValueError("Texto extraído está vazio")
 
-    # DEBUG CONTROLADO (opcional)
-    #print(f"[OCR OK] '{pdf_name}' | {num_pages} páginas")
-    #print(text[:1000])  # primeiras 1000 chars
-
-    return {
-        "text": text,
-        "metadata": native_metadata
-    }
-
-result = process_pdf("Documento sobre RAG-ENG.pdf")
-
-#print(result["metadata"])
-#print(len(result["text"]))
+    return text

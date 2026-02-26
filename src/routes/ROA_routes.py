@@ -1,7 +1,9 @@
 from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from ROA.vectorstore_manager import add_chunks
 from services.ROA_services import answer_question, create_document_metadata_service, delete_document_service
-from ROA.pymupdf_loader import process_pdf
+#from ROA.pymupdf_loader import process_pdf
+from ROA.docling_utils import process_pdf
+from ROA.chunking import build_chunks
 from schemas.ROA_schemas import ChatRequest, ChatResponse
 from sqlalchemy.orm import Session
 from database import get_db
@@ -27,7 +29,7 @@ def chat(req: ChatRequest):
     return {"answer": answer}
 
 @ROA_router.post("/upload")
-def upload_pdf(file: UploadFile = File(...), db: Session = Depends(get_db)):
+def upload_pdf(file: UploadFile = File(...)):
 
     logger.info(f"📥 [UPLOAD] Arquivo recebido: {file.filename}")
 
@@ -44,48 +46,29 @@ def upload_pdf(file: UploadFile = File(...), db: Session = Depends(get_db)):
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        logger.info("📄 [UPLOAD] Iniciando processamento do PDF")
-        chunks, document_index = process_pdf(file_path)
-        
+        logger.info("📄 [UPLOAD] Iniciando processamento do PDF (Docling)")
 
-        doc_id = chunks[0].metadata.get("doc_id", str(uuid.uuid4()))
+        # ✅ PASSA O CAMINHO COMPLETO
+        text = process_pdf(file_path)
+
+        logger.info("✂️ [UPLOAD] Iniciando chunking")
+
+        chunks = build_chunks(
+            text=text,
+            source=file.filename,
+            global_metadata=None
+        )
+
+        logger.info(f"🧠 [UPLOAD] Indexando {len(chunks)} chunks no vector store")
+
         add_chunks(chunks)
-        logger.info(f"✅ [INGEST] FAISS atualizado com {len(chunks)} chunks")
 
-        # Mapeando metadados do PDF para o modelo SQLAlchemy
-        
-        metadata_dict = chunks[0].metadata  # assumindo que os metadados estão no primeiro chunk
-        
-        metadata_mapped = {
-            "doc_id": doc_id,
-            "producer": metadata_dict.get("producer"),
-            "creator": metadata_dict.get("creator"),
-            "title": metadata_dict.get("title"),
-            "author": metadata_dict.get("author"),
-            "subject": metadata_dict.get("subject"),
-            "keywords": metadata_dict.get("keywords"),
-            "format": metadata_dict.get("format"),
-            "trapped": metadata_dict.get("trapped"),
-            "creation_date": metadata_dict.get("creation_date"),
-            "modification_date": metadata_dict.get("moddate"),
-            "creation_date_raw": metadata_dict.get("creationdate"),
-            "modification_date_raw": metadata_dict.get("moddate"),
-            "source": metadata_dict.get("source", "ROA_UPLOAD"),
-            "file_path": file_path,
-            "total_pages": metadata_dict.get("total_pages", len(chunks)),
-        }
-
-        # Cria o registro no banco
-        metadata_record = create_document_metadata_service(db, metadata_mapped)
-
-        logger.info(f"✅ [UPLOAD] Ingestão e salvamento no DB concluídos | doc_id={doc_id}")
+        logger.info("✅ [UPLOAD] Documento ingerido com sucesso")
 
         return {
             "status": "success",
             "filename": file.filename,
-            "doc_id": doc_id,
-            "chunks": len(chunks),
-            "metadata_id": metadata_record.id
+            "chunks": len(chunks)
         }
 
     except Exception as e:

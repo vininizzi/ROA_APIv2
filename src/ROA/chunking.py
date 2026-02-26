@@ -1,16 +1,6 @@
-"""
-Módulo responsável pela segmentação do texto em chunks semanticamente coerentes
-para indexação em sistemas RAG acadêmicos.
-
-Este chunker:
-- Preserva parágrafos lógicos
-- Controla tamanho mínimo e máximo
-- Evita chunks muito pequenos ou muito grandes
-- Anexa metadados estruturais úteis para recuperação e auditoria
-"""
-
 from langchain_core.documents import Document
 from typing import List, Dict
+import hashlib
 
 
 def build_chunks(
@@ -20,19 +10,6 @@ def build_chunks(
     min_chars: int = 300,
     max_chars: int = 1200,
 ) -> List[Document]:
-    """
-    Constrói chunks a partir de texto linearizado.
-
-    Args:
-        text: Texto completo do documento.
-        source: Nome ou identificador do documento.
-        global_metadata: Metadados globais do documento (opcional).
-        min_chars: Tamanho mínimo de um chunk.
-        max_chars: Tamanho máximo de um chunk.
-
-    Returns:
-        Lista de Documents prontos para indexação.
-    """
 
     # -------------------------------
     # 1️⃣ Normalização leve
@@ -50,6 +27,8 @@ def build_chunks(
     buffer = ""
     chunk_id = 1
 
+    seen_hashes = set()  # 🔹 CONTROLE DE DUPLICAÇÃO
+
     # -------------------------------
     # 2️⃣ Agrupamento semântico
     # -------------------------------
@@ -58,45 +37,50 @@ def build_chunks(
             buffer += ("\n\n" + p) if buffer else p
         else:
             if len(buffer) >= min_chars:
-                chunks.append(
-                    _make_chunk(
-                        buffer,
-                        source,
-                        chunk_id,
-                        global_metadata
-                    )
+                _try_add_chunk(
+                    buffer,
+                    source,
+                    chunk_id,
+                    global_metadata,
+                    chunks,
+                    seen_hashes
                 )
                 chunk_id += 1
                 buffer = p
             else:
-                # força agregação se chunk ficou pequeno
                 buffer += ("\n\n" + p)
 
     # -------------------------------
     # 3️⃣ Último chunk
     # -------------------------------
     if buffer.strip():
-        chunks.append(
-            _make_chunk(
-                buffer,
-                source,
-                chunk_id,
-                global_metadata
-            )
+        _try_add_chunk(
+            buffer,
+            source,
+            chunk_id,
+            global_metadata,
+            chunks,
+            seen_hashes
         )
 
     return chunks
 
 
-def _make_chunk(
+def _try_add_chunk(
     content: str,
     source: str,
     chunk_id: int,
-    global_metadata: Dict | None
-) -> Document:
-    """
-    Cria um Document com metadados estruturados.
-    """
+    global_metadata: Dict | None,
+    chunks: List[Document],
+    seen_hashes: set,
+):
+    normalized = " ".join(content.split())
+    h = hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+    if h in seen_hashes:
+        return  # 🔴 IGNORA CHUNK DUPLICADO
+
+    seen_hashes.add(h)
 
     metadata = {
         "source": source,
@@ -108,7 +92,6 @@ def _make_chunk(
     if global_metadata:
         metadata["document_metadata"] = global_metadata
 
-    return Document(
-        page_content=content,
-        metadata=metadata
+    chunks.append(
+        Document(page_content=content, metadata=metadata)
     )
