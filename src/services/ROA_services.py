@@ -3,8 +3,10 @@
 import uuid
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+import logging
 from sqlalchemy.sql import func
 
+logger = logging.getLogger("ROA")
 # =========================
 # ROA / RAG / Question Answering
 # =========================
@@ -26,21 +28,74 @@ def clean_pdf_text(text: str) -> str:
     return text.strip()
 
 
-def answer_question(question: str) -> str:
-    vector_store = get_vectorstore()
+from models.chat_history_model import Conversation, Message
 
-    # Executa o pipeline
+def answer_question(db: Session, question: str, user_id: str, conversation_id: str = None) -> dict:
+    # 1. Obter ou criar conversação
+    conversation_id = conversation_id
+    chat_history = []
+    
+    try:
+        if conversation_id:
+            conversation = db.query(Conversation).filter(
+                Conversation.id == conversation_id,
+                Conversation.user_id == user_id
+            ).first()
+            if not conversation:
+                # Se não achou, vamos criar uma nova (vini_mock_id case)
+                conversation = Conversation(user_id=user_id, title=question[:50])
+                db.add(conversation)
+                db.commit()
+                db.refresh(conversation)
+                conversation_id = conversation.id
+        else:
+            conversation = Conversation(user_id=user_id, title=question[:50])
+            db.add(conversation)
+            db.commit()
+            db.refresh(conversation)
+            conversation_id = conversation.id
+
+        # 2. Resgatar histórico
+        history = db.query(Message).filter(
+            Message.conversation_id == conversation_id
+        ).order_by(Message.created_at.desc()).limit(10).all()
+        
+        history = history[::-1]
+        for msg in history:
+            chat_history.append((msg.role, msg.content))
+            
+    except Exception as e:
+        logger.error(f"⚠️ Erro ao acessar histórico no banco (provavelmente user {user_id} não existe): {e}")
+        # Se falhou o banco, seguimos sem histórico para não dar 500
+        conversation_id = conversation_id or "temp_id"
+
+    # 4. Executar o pipeline
+    vector_store = get_vectorstore()
     result = run_pipeline(
         question=question,
         retriever=vector_store.as_retriever(search_kwargs={"k": 8}),
-        language=None
+        language=None,
+        history=chat_history
     )
 
-    # Como `result` já é string, limpa diretamente
     answer = clean_pdf_text(result)
-    return answer
 
+    # 5. Salvar mensagens no banco (opcional/best effort)
+    try:
+        if conversation_id != "temp_id":
+            user_msg = Message(conversation_id=conversation_id, role="user", content=question)
+            assistant_msg = Message(conversation_id=conversation_id, role="assistant", content=answer)
+            db.add(user_msg)
+            db.add(assistant_msg)
+            db.commit()
+    except Exception as e:
+        logger.error(f"⚠️ Erro ao salvar mensagem no banco: {e}")
 
+    return {
+        "answer": answer, 
+        "conversation_id": conversation_id,
+        "history_count": len(chat_history)
+    }
 
 
 # =========================

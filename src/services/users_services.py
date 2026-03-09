@@ -18,6 +18,8 @@ def authenticate_user(db: Session, login_id: str, password: str):
         
     return user
 
+from sqlalchemy.exc import IntegrityError
+
 def create_user_service(db: Session, user_data: UserCreate):
     db_user = User(
         name=user_data.name, 
@@ -26,9 +28,16 @@ def create_user_service(db: Session, user_data: UserCreate):
         role=user_data.role
     )
     db.add(db_user)
-    db.commit()
-    db.refresh(db_user)
-    return db_user
+    try:
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User with this email or name already exists."
+        )
 
 def get_all_users_service(db: Session, page: int, limit: int):
     offset = (page - 1) * limit

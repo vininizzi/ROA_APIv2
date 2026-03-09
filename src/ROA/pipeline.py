@@ -1,77 +1,109 @@
-from langchain_community.chat_models import ChatOllama
-from ROA.prompt_builder import build_prompt
-from ROA.intent_classifier import classify_intent
-from ROA.language import get_out_of_context_message
+import os
+from dotenv import load_dotenv
+
+# Load .env
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", "..", ".env"))
+
+from langchain_openai import ChatOpenAI
+from langchain.agents import create_agent
+from langchain.tools import tool
+from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
+
 from ROA.llm_language import detect_language_llm
 from ROA.vectorstore_manager import get_retriever
+from ROA.canvas_tools import canvas_tools
 
 print("PIPELINE LOADED FROM:", __file__)
+
+
+@tool
+def search_documents(query: str) -> str:
+    """
+    Search for information within the uploaded academic documents.
+    """
+    retriever = get_retriever(k=8)
+    docs = retriever.invoke(query)
+
+    return "\n\n".join([
+        f"Source: {d.metadata.get('source')}\nContent: {d.page_content}"
+        for d in docs
+    ])
+
 
 def run_pipeline(
     question: str,
     retriever=None,
-    language: str | None = None
+    language: str | None = None,
+    history: list = None
 ):
+
     print("=========== PIPELINE START ===========")
     print("Pergunta:", question)
 
-    model = ChatOllama(
-        model="gemma3:1b",
-        temperature=0.2
+    llm = ChatOpenAI(
+        model="gpt-4o-mini",
+        temperature=0.2,
+        api_key=os.getenv("OPENAI_API_KEY") or os.getenv("API_KEY")
     )
 
-    # 🌍 Detecta idioma
+    # Detect language
     if language is None:
-        language = detect_language_llm(question, model)
+        language = detect_language_llm(question, llm)
 
     print("Idioma detectado:", language)
 
-    # 🎯 Classificação de intenção
-    intent = classify_intent(question)
-    print("Intenção:", intent)
+    # Combine tools
+    all_tools = [search_documents] + canvas_tools
 
-    # 🔎 BUSCA NO VECTOR STORE
-    print("=========== VECTOR STORE SEARCH ===========")
+    # System prompt (precisa ser STRING no LangChain 1.x)
+    system_prompt = f"""
+You are a strict academic AI assistant specialized in education and document analysis.
+Your mission is to help students learn and understand academic materials and their Canvas courses.
 
-    if retriever is None:
-        retriever = get_retriever(k=8)
+YOU HAVE ACCESS TO TWO TYPES OF TOOLS:
+1. search_documents → Search in uploaded PDFs/academic files.
+2. Canvas Tools → Retrieve info from the student's Canvas (courses, assignments, etc.).
 
-    # ✅ CHAMADA CORRETA (nova API)
-    retrieved = retriever.invoke(question)
+RESPONSE STRUCTURE:
+[EXPLANATION]: Your clear academic explanation.
+[DATA/CODE]: Retrieved data or code if needed.
+[SOURCE]: Mention where the info came from (document or Canvas).
 
-    print(f"Chunks recuperados: {len(retrieved)}")
+IMPORTANT: You MUST answer in {language}.
+"""
 
-    for i, c in enumerate(retrieved):
-        print(f"\n--- CHUNK {i+1} ---")
-        print("Metadata:", c.metadata)
-        print("Preview:")
-        print(c.page_content[:400])
-
-    if not retrieved:
-        print("⚠️ Nenhum chunk encontrado no vector store")
-        return get_out_of_context_message(language)
-
-    # 🧩 Monta contexto
-    context = "\n\n".join(
-        f"==Fonte: {c.metadata.get('source', 'N/A')}==\n{c.page_content}"
-        for c in retrieved[:8]
+    # Create agent
+    agent = create_agent(
+        model=llm,
+        tools=all_tools,
+        system_prompt=system_prompt
     )
 
-    print("=========== CONTEXT FINAL ===========")
-    #print(context[:1000])
+    # Build messages
+    messages = [SystemMessage(content=system_prompt)]
 
-    # 🧠 Prompt
-    messages = build_prompt(context, question, intent, language)
+    # Add history if exists
+    if history:
+        for role, content in history:
+            if role == "user":
+                messages.append(HumanMessage(content=content))
+            else:
+                messages.append(AIMessage(content=content))
 
-    print("=========== PROMPT BUILT ===========")
-    for role, msg in messages:
-        print(f"[{role.upper()}]")
-        print(msg[:500])
+    # Add current question
+    messages.append(HumanMessage(content=question))
 
-    # 🤖 Chamada LLM
-    response = model.invoke(messages)
+    print("=========== AGENT EXECUTION ===========")
 
-    print("=========== RAW LLM RESPONSE ===========")
-    print(response.content)
+    response = agent.invoke({
+        "messages": messages
+    })
 
-    return response.content
+    # LangChain 1.x returns messages
+    answer = response["messages"][-1].content
+
+    print("=========== AGENT RESPONSE ===========")
+    print(answer)
+
+    return answer

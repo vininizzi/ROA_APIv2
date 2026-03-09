@@ -1,0 +1,26 @@
+[
+    {
+        "id": 301,
+        "name": "Alice Smith",
+        "created_at": "2024-01-10T00:00:00Z",
+        "sortable_name": "Smith, Alice",
+        "short_name": "Alice",
+        "login_id": "asmith"
+    },
+    {
+        "id": 302,
+        "name": "Bob Jones",
+        "created_at": "2024-01-15T00:00:00Z",
+        "sortable_name": "Jones, Bob",
+        "short_name": "Bob",
+        "login_id": "bjones"
+    },
+    {
+        "id": 303,
+        "name": "Charlie Brown",
+        "created_at": "2024-02-01T00:00:00Z",
+        "sortable_name": "Brown, Charlie",
+        "short_name": "Charlie",
+        "login_id": "cbrown"
+    }
+]

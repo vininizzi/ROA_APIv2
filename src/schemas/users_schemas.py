@@ -8,7 +8,7 @@ class UserCreate(BaseModel):
     name: str
     email: str
     password: str
-    role: Optional[UserRole] = UserRole.USER
+    role: Optional[UserRole] = UserRole.STUDENT
     
 class UserRead(BaseModel):
     id: str

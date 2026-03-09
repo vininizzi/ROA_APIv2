@@ -16,94 +16,45 @@ from typing import List, Tuple
 
 def _system_text(intent: str, language: str = "English") -> str:
     """
-    Texto base do system prompt.
-
-    O idioma da resposta é um parâmetro do sistema e tem prioridade máxima,
-    independentemente do idioma do contexto ou da pergunta do usuário.
+    Texto base do system prompt refinado para ser estritamente acadêmico e prioritário em documentos.
     """
 
     system = (
-        "You are an academic AI assistant specialized in document analysis. "
-        "Your task is to answer questions using only the information contained in the context, even if it must be summarized or rephrased."
-        "Your answer must be clearly and directly related to the document content. "
-        "Do NOT introduce external knowledge, definitions, or assumptions "
-        "that are not supported by the document. "
-        "If the context is completely unrelated to the question "
-        "to reasonably answer the question, respond EXACTLY with: "
-        "'Not found in the provided document.' "
-        f"IMPORTANT LANGUAGE RULE: "
-        f"You MUST answer in {language}. "
-        f"The response given to the user language MUST be {language}, regardless of the original document language "
-        "If the document context does not contain sufficient information to reasonably answer the question, respond EXACTLY with:'Not found in the provided document.'"
-        "used in the context or the question."
+        "You are a strict academic AI assistant specialized in education and document analysis. "
+        "Your mission is to help students learn and understand academic materials.\n\n"
+        "RESPONSE STRUCTURE:\n"
+        "You must respond in a way that separates the general explanation from the technical/code snippets. "
+        "Use the following structure in your response:\n"
+        "[EXPLANATION]: Your clear, academic explanation here.\n"
+        "[CODE]: If applicable, the technical implementation or code block here. Use triple backticks.\n"
+        "[SOURCE]: Mention if the info is from the document or general knowledge.\n\n"
+        "RULES:\n"
+        "1. **Academic Only**: Answer only academic questions.\n"
+        "2. **Document Priority**: Use provided context as primary truth.\n"
+        "3. **Tone**: Helpful and strictly educational.\n"
+        f"You MUST answer in {language}."
     )
 
     if intent == "VERBATIM":
-        system += (
-            " Quote the relevant passage verbatim from the document. "
-            "Do not paraphrase or alter the original wording."
-        )
-
+        system += " Quote relevant passages exactly."
     elif intent == "DEFINITION":
-        system += (
-            " Provide a concise and formal definition derived from the document text. "
-            "Paraphrasing is allowed as long as the meaning is preserved."
-        )
-
-    elif intent == "LOCATION":
-        system += (
-            " Indicate where the information appears in the document, "
-            "such as the section, heading, or page, if this information is available."
-        )
-
-    elif intent == "CONTENT":
-        system += (
-            " Summarize the main topics and structure of the document. "
-            "Focus on what the document covers, not on external explanations."
-        )
-
+        system += " Provide formal definitions."
+    # Adicionando suporte a intent de estudo se necessário futuramente
     return system
-
 
 
 def _human_text(context: str, question: str, language: str) -> str:
     few_shots = {
         "English": (
-            "Example:\n"
-            "Context:\n"
-            "Retrieval-Augmented Generation (RAG) is a method that combines "
-            "information retrieval with text generation models to improve "
-            "the quality of generated answers.\n\n"
-            "Question:\n"
-            "What is RAG?\n\n"
-            "Answer:\n"
-            "RAG is a method that combines information retrieval with text generation "
-            "models to improve the quality of generated answers.\n\n"
+            "Context: (Academic material)\n"
+            "Question: (Student question)\n"
+            "Answer: (Helpful academic response)\n\n"
         ),
         "Portuguese": (
-            "Exemplo:\n"
-            "Contexto:\n"
-            "Retrieval-Augmented Generation (RAG) é um método que combina "
-            "recuperação de informação com modelos de geração de texto "
-            "para melhorar a qualidade das respostas geradas.\n\n"
-            "Pergunta:\n"
-            "O que é RAG?\n\n"
-            "Resposta:\n"
-            "RAG é um método que combina recuperação de informação com modelos "
-            "de geração de texto para melhorar a qualidade das respostas geradas.\n\n"
+            "Contexto: (Material acadêmico)\n"
+            "Pergunta: (Pergunta do aluno)\n"
+            "Resposta: (Resposta acadêmica útil)\n\n"
         ),
-        "Spanish": (
-            "Ejemplo:\n"
-            "Contexto:\n"
-            "Retrieval-Augmented Generation (RAG) es un método que combina "
-            "la recuperación de información con modelos de generación de texto "
-            "para mejorar la calidad de las respuestas generadas.\n\n"
-            "Pregunta:\n"
-            "¿Qué es RAG?\n\n"
-            "Respuesta:\n"
-            "RAG es un método que combina la recuperación de información con modelos "
-            "de generación de texto para mejorar la calidad de las respuestas generadas.\n\n"
-        )
     }
 
     return (
@@ -121,28 +72,26 @@ def build_prompt(
     question: str,
     intent: str,
     language: str = "English",
+    history: list = None,
     mode: str = "chat"
 ):
     """
     Constrói o prompt final.
-
-    Args:
-        context: Texto de contexto (documento ou chunks recuperados).
-        question: Pergunta do usuário.
-        intent: Intenção classificada (e.g. 'VERBATIM', 'DEFINITION', 'LOCATION', 'CONTENT').
-        language: Idioma da resposta (ex: 'Portuguese', 'English', 'Spanish').
-        mode: 'chat' retorna List[Tuple[str, str]]
-              'text' retorna uma string única.
-
-    Returns:
-        List[Tuple[str, str]] se mode == 'chat'
-        str se mode == 'text'
     """
 
     system = _system_text(intent, language)
     human = _human_text(context, question, language)
 
     if mode == "chat":
+        messages = [("system", system)]
+        
+        # Adicionar histórico se houver
+        if history:
+            for role, content in history:
+                messages.append((role, content))
+        
+        messages.append(("human", human))
+        return messages
         # Formato ideal para ChatOllama / LangChain
         return [
             ("system", system),

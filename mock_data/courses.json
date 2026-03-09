@@ -1,0 +1,32 @@
+[
+  {
+    "id": 101,
+    "name": "Introduction to AI",
+    "course_code": "AI-101",
+    "workflow_state": "available",
+    "start_at": "2025-01-10T00:00:00Z",
+    "end_at": "2025-06-10T00:00:00Z",
+    "is_public": true,
+    "enrollment_term_id": 1
+  },
+  {
+    "id": 102,
+    "name": "Database Systems",
+    "course_code": "DB-201",
+    "workflow_state": "available",
+    "start_at": "2025-01-15T00:00:00Z",
+    "end_at": "2025-06-15T00:00:00Z",
+    "is_public": false,
+    "enrollment_term_id": 1
+  },
+  {
+    "id": 103,
+    "name": "Advanced Python Programming",
+    "course_code": "PY-301",
+    "workflow_state": "completed",
+    "start_at": "2024-08-10T00:00:00Z",
+    "end_at": "2024-12-10T00:00:00Z",
+    "is_public": false,
+    "enrollment_term_id": 2
+  }
+]

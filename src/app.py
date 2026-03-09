@@ -1,6 +1,12 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+import os
+
+# Load .env from root or src
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
 
 from database import get_db
 from routes import general_routes, users_routes, ROA_routes
@@ -8,6 +14,8 @@ from ROA.vectorstore_manager import load_vectorstore
 import logging
 from ROA.vectorstore_manager import load_vectorstore
 from services.ROA_services import delete_document_service
+from database import Base, engine
+from models import users_model
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -21,8 +29,11 @@ app = FastAPI(title="sql alchemy")
 
 @app.on_event("startup")
 def startup_event():
-    load_vectorstore()
+    logger.info("Initializing database tables...")
+    Base.metadata.create_all(bind=engine)
 
+    logger.info("Loading vector store...")
+    load_vectorstore()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

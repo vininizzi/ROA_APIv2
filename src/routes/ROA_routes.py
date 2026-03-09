@@ -23,11 +23,34 @@ UPLOAD_DIR = (
     "Documentos/uploads"
 )
 
-@ROA_router.post("/chat", response_model=ChatResponse)
-def chat(req: ChatRequest):
-    answer = answer_question(req.question)
-    return {"answer": answer}
+from core.security import get_current_user
+from models.users_model import User
 
+@ROA_router.post("/chat", response_model=ChatResponse)
+def chat(
+    req: ChatRequest, 
+    db: Session = Depends(get_db)
+):
+    # Bypass de login para testes
+    user_id = "vini_mock_id"
+    
+    result = answer_question(
+        db=db, 
+        question=req.question, 
+        user_id=user_id, 
+        conversation_id=req.conversation_id
+    )
+    return result
+
+@ROA_router.get("/history", response_model=list)
+def get_history(
+    db: Session = Depends(get_db)
+):
+    from models.chat_history_model import Conversation
+    user_id = "vini_mock_id"
+    conversations = db.query(Conversation).filter(Conversation.user_id == user_id).all()
+    return conversations
+    
 @ROA_router.post("/upload")
 def upload_pdf(file: UploadFile = File(...)):
 
