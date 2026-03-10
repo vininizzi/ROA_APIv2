@@ -42,15 +42,18 @@ def chat(
     )
     return result
 
-@ROA_router.get("/history", response_model=list)
+@ROA_router.get("/history/", response_model=list)
 def get_history(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
     from models.chat_history_model import Conversation
-    user_id = "vini_mock_id"
+    user_id = current_user.id
+    print(user_id)
     conversations = db.query(Conversation).filter(Conversation.user_id == user_id).all()
+    print(conversations)
     return conversations
-    
+
 @ROA_router.post("/upload")
 def upload_pdf(file: UploadFile = File(...)):
 

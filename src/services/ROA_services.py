@@ -78,7 +78,7 @@ def answer_question(db: Session, question: str, user_id: str, conversation_id: s
         history=chat_history
     )
 
-    answer = clean_pdf_text(result)
+    answer = result
 
     # 5. Salvar mensagens no banco (opcional/best effort)
     try:

@@ -42,9 +42,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from fastapi.staticfiles import StaticFiles
+
 app.include_router(general_routes.general_router)
 app.include_router(users_routes.users_router)
 app.include_router(ROA_routes.ROA_router)
+
+# Serve Frontend Static Files
+frontend_path = os.path.join(os.path.dirname(__file__), "..", "frontend")
+if os.path.exists(frontend_path):
+    app.mount("/static", StaticFiles(directory=frontend_path), name="static")
 
 if __name__ == "__main__":
     uvicorn.run("app:app", reload=True)

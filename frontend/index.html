@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROA Chat Assistant</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Highlight.js Styles -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Exemplo de site em branco para demonstração -->
+    <div class="demo-bg">
+        <h1>ROA Chat Widget Demo</h1>
+        <p>Este chatbot pode ser implementado em qualquer site via script ou iframe.</p>
+    </div>
+
+    <!-- Chat Widget Container -->
+    <div id="roa-chat-widget">
+        <!-- Floating Button -->
+        <button id="roa-chat-trigger" title="Falar com Assistente">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+        </button>
+
+        <!-- Chat Window -->
+        <div id="roa-chat-window" class="hidden">
+            <!-- Resize Handle -->
+            <div id="roa-resize-handle"></div>
+            
+            <div class="chat-header">
+                <div class="header-info">
+                    <div class="bot-avatar">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" fill="url(#grad1)"/><path d="M12 17L12 12" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M12 7L12.01 7.01" stroke="white" stroke-width="3" stroke-linecap="round"/><defs><linearGradient id="grad1" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#7C3AED"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs></svg>
+                    </div>
+                    <span>Assistente ROA</span>
+                </div>
+                <button id="roa-close-chat">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                </button>
+            </div>
+
+            <div id="roa-chat-messages">
+                <div class="message system">
+                    <div class="content">Olá! Eu sou o assistente acadêmico da ROA. Como posso te ajudar hoje?</div>
+                </div>
+            </div>
+
+            <div class="chat-input-area">
+                <textarea id="roa-user-input" placeholder="Digite sua dúvida..." rows="1"></textarea>
+                <button id="roa-send-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="chat.js"></script>
+</body>
+</html>
