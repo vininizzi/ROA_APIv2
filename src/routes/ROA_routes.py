@@ -29,10 +29,10 @@ from models.users_model import User
 @ROA_router.post("/chat", response_model=ChatResponse)
 def chat(
     req: ChatRequest, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
 ):
-    # Bypass de login para testes
-    user_id = "vini_mock_id"
+    user_id = current_user.id
     
     result = answer_question(
         db=db, 

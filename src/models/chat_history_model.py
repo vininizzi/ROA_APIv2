@@ -23,6 +23,8 @@ class Message(Base):
     conversation_id = Column(String(36), ForeignKey("conversations.id"), nullable=False)
     role = Column(String, nullable=False) # 'user' or 'assistant'
     content = Column(Text, nullable=False)
+    model_used = Column(String, nullable=True)
+    metrics = Column(String, nullable=True) # JSON store for metrics like token count
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     conversation = relationship("Conversation", back_populates="messages")

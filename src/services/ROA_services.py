@@ -31,6 +31,20 @@ def clean_pdf_text(text: str) -> str:
 from models.chat_history_model import Conversation, Message
 
 def answer_question(db: Session, question: str, user_id: str, conversation_id: str = None) -> dict:
+    from models.users_model import User
+    
+    # Check if user exists, if not create dummy user to satisfy Foreign Key
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        new_user = User(id=user_id, name="Test User", email=f"{user_id}@mock.test")
+        db.add(new_user)
+        try:
+            db.commit()
+            db.refresh(new_user)
+        except Exception as e:
+            db.rollback()
+            logger.error(f"Error creating mock user: {e}")
+
     # 1. Obter ou criar conversação
     conversation_id = conversation_id
     chat_history = []
@@ -82,9 +96,20 @@ def answer_question(db: Session, question: str, user_id: str, conversation_id: s
 
     # 5. Salvar mensagens no banco (opcional/best effort)
     try:
+        import json
         if conversation_id != "temp_id":
             user_msg = Message(conversation_id=conversation_id, role="user", content=question)
-            assistant_msg = Message(conversation_id=conversation_id, role="assistant", content=answer)
+            
+            # Extract basic metric info (we can expand this later)
+            metrics_data = json.dumps({"response_length": len(answer), "history_length": len(chat_history)})
+            
+            assistant_msg = Message(
+                conversation_id=conversation_id, 
+                role="assistant", 
+                content=answer,
+                model_used="gpt-4o-mini",
+                metrics=metrics_data
+            )
             db.add(user_msg)
             db.add(assistant_msg)
             db.commit()
