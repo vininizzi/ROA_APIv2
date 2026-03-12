@@ -31,6 +31,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const userInput = document.getElementById('roa-user-input');
     const messagesContainer = document.getElementById('roa-chat-messages');
     const resizeHandle = document.getElementById('roa-resize-handle');
+    const uploadBtn = document.getElementById('roa-upload-btn');
+    const fileInput = document.getElementById('roa-file-input');
 
     const BASE_URL = 'http://localhost:8000/ROA';
     const API_URL = `${BASE_URL}/chat`;
@@ -278,6 +280,52 @@ document.addEventListener('DOMContentLoaded', () => {
         isResizing = false;
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', stopResizing);
+    }
+
+    // --- Upload Logic ---
+    function showUploadToast(msg, isError = false) {
+        // Reuse addMessage for a simple in-chat toast
+        const div = document.createElement('div');
+        div.className = 'message system';
+        div.style.cssText = `font-size:12px; opacity:0.75; padding:6px 12px; font-style:italic;`;
+        div.textContent = msg;
+        messagesContainer.appendChild(div);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        setTimeout(() => div.remove(), 5000);
+    }
+
+    if (uploadBtn && fileInput) {
+        uploadBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            showUploadToast(`📎 Enviando "${file.name}"…`);
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(`${BASE_URL}/upload`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    showUploadToast(`✅ "${file.name}" indexado com sucesso (${data.chunks} trechos).`);
+                } else {
+                    const err = await res.json();
+                    showUploadToast(`❌ Erro ao enviar: ${err.detail || res.statusText}`, true);
+                }
+            } catch (e) {
+                showUploadToast('❌ Falha de conexão ao enviar arquivo.', true);
+            } finally {
+                fileInput.value = '';
+            }
+        });
     }
 });
 
