@@ -32,16 +32,102 @@ document.addEventListener('DOMContentLoaded', () => {
     const messagesContainer = document.getElementById('roa-chat-messages');
     const resizeHandle = document.getElementById('roa-resize-handle');
 
-    const API_URL = 'https://elna-semitheatric-cinthia.ngrok-free.dev/ROA/chat';
+    const BASE_URL = 'http://localhost:8000/ROA';
+    const API_URL = `${BASE_URL}/chat`;
+    const LOGIN_URL = `${BASE_URL}/login`;
     let conversationId = null;
+    let token = localStorage.getItem('roa_token');
+
+    const isIframe = window.self !== window.top;
+
+    const loginOverlay = document.getElementById('roa-login-overlay');
+    const loginBtn = document.getElementById('roa-login-btn');
+    const emailInput = document.getElementById('roa-email');
+    const passwordInput = document.getElementById('roa-password');
+    const loginError = document.getElementById('roa-login-error');
+
+    function checkAuth() {
+        if (!loginOverlay) return; // Skip if no overlay (e.g., on dashboard)
+        if (token) {
+            loginOverlay.classList.add('hidden');
+            if (isIframe && userInput) {
+                userInput.focus();
+            }
+        } else {
+            loginOverlay.classList.remove('hidden');
+        }
+    }
+
+    async function login() {
+        const email = emailInput.value.trim();
+        const password = passwordInput.value.trim();
+
+        if (!email || !password) {
+            loginError.textContent = 'Preencha todos os campos.';
+            return;
+        }
+
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Entrando...';
+        loginError.textContent = '';
+
+        try {
+            // OAuth2PasswordRequestForm expects x-www-form-urlencoded
+            const formData = new URLSearchParams();
+            formData.append('username', email);
+            formData.append('password', password);
+
+            const response = await fetch(LOGIN_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.access_token) {
+                token = data.access_token;
+                localStorage.setItem('roa_token', token);
+                emailInput.value = '';
+                passwordInput.value = '';
+                checkAuth();
+            } else {
+                loginError.textContent = data.detail || 'Erro ao fazer login.';
+            }
+        } catch (error) {
+            loginError.textContent = 'Erro de conexão com o servidor.';
+            console.error('Login Error:', error);
+        } finally {
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Acessar';
+        }
+    }
+
+    if (loginBtn) {
+        loginBtn.addEventListener('click', login);
+    }
+    if (passwordInput) {
+        passwordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') login();
+        });
+    }
 
     // --- Show/Hide Logic ---
-    trigger.addEventListener('click', () => {
-        windowEl.classList.toggle('hidden');
-        if (!windowEl.classList.contains('hidden')) {
-            userInput.focus();
-        }
-    });
+    if (isIframe) {
+        // In iframe mode, always show the window and hide the trigger
+        windowEl.classList.remove('hidden');
+        if (trigger) trigger.style.display = 'none';
+        checkAuth();
+    } else if (trigger) {
+        trigger.addEventListener('click', () => {
+            windowEl.classList.toggle('hidden');
+            if (!windowEl.classList.contains('hidden')) {
+                checkAuth();
+            }
+        });
+    }
 
     closeBtn.addEventListener('click', () => {
         windowEl.classList.add('hidden');
@@ -97,12 +183,23 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(API_URL, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     question: text,
                     conversation_id: conversationId
                 })
             });
+
+            if (response.status === 401) {
+                token = null;
+                localStorage.removeItem('roa_token');
+                checkAuth();
+                messagesContainer.removeChild(loadingDiv);
+                return;
+            }
 
             const data = await response.json();
             messagesContainer.removeChild(loadingDiv);

@@ -1,64 +1,265 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROA Chat Assistant</title>
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Highlight.js Styles -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <!-- Exemplo de site em branco para demonstração -->
-    <div class="demo-bg">
-        <h1>ROA Chat Widget Demo</h1>
-        <p>Este chatbot pode ser implementado em qualquer site via script ou iframe.</p>
-    </div>
 
-    <!-- Chat Widget Container -->
-    <div id="roa-chat-widget">
-        <!-- Floating Button -->
-        <button id="roa-chat-trigger" title="Falar com Assistente">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z"/></svg>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>ROA Platform - Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="style.css"/>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+            --glass: rgba(255, 255, 255, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.4);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        nav {
+            padding: 20px 40px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        main {
+            flex: 1;
+            padding: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .center-card {
+            width: 100%;
+            max-width: 720px;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 48px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: #1e293b;
+        }
+
+        p.lead {
+            color: #475569;
+            margin-bottom: 28px;
+            font-size: 1rem;
+        }
+
+        .btn-logout {
+            background: transparent;
+            color: #ef4444;
+            border: 1px solid #ef4444;
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 14px 22px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 8px 20px rgba(79,70,229,0.18);
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 14px 30px rgba(79,70,229,0.16);
+        }
+
+        #user-display {
+            font-weight: 500;
+            color: #475569;
+        }
+
+        /* chat widget minimal styling kept (overlay handled in chat.js) */
+        #roa-chat-widget {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        #roa-chat-trigger {
+            width: 56px;
+            height: 56px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(79,70,229,0.18);
+        }
+
+        #roa-chat-window.hidden {
+            display: none;
+        }
+
+        /* small responsive */
+        @media (max-width: 720px) {
+            .center-card { padding: 28px; }
+            .btn-primary { width: 100%; }
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo">ROA Platform</div>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <span id="user-display">Usuário</span>
+            <button class="btn-logout" onclick="logout()">Sair</button>
+        </div>
+    </nav>
+
+    <main>
+        <div class="center-card" role="main" aria-labelledby="main-title">
+            <h2 id="main-title">Sessão de Teste</h2>
+            <p class="lead">Quando terminar a interação com o assistente, clique em <strong>Finalizar o teste</strong> para enviar seu feedback.</p>
+
+            <button id="finalize-btn" class="btn-primary" aria-label="Finalizar o teste">Finalizar o teste</button>
+
+            <p style="margin-top:20px; color:#94a3b8; font-size:0.95rem;">
+                O botão leva para a página de feedback onde você poderá avaliar a experiência.
+            </p>
+        </div>
+    </main>
+
+    <!-- Integrando o Widget Existente (mantido) -->
+    <div id="roa-chat-widget" aria-hidden="false">
+        <button id="roa-chat-trigger" title="Falar com Assistente" aria-label="Abrir chat">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="m3 21 1.9-5.7a8.5 8.5 0 1 1 3.8 3.8z" />
+            </svg>
         </button>
 
-        <!-- Chat Window -->
-        <div id="roa-chat-window" class="hidden">
-            <!-- Resize Handle -->
-            <div id="roa-resize-handle"></div>
-            
-            <div class="chat-header">
-                <div class="header-info">
-                    <div class="bot-avatar">
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" fill="url(#grad1)"/><path d="M12 17L12 12" stroke="white" stroke-width="2" stroke-linecap="round"/><path d="M12 7L12.01 7.01" stroke="white" stroke-width="3" stroke-linecap="round"/><defs><linearGradient id="grad1" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse"><stop stop-color="#7C3AED"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs></svg>
+        <div id="roa-chat-window" class="hidden" role="dialog" aria-label="Chat ROA">
+            <div id="roa-resize-handle" style="display:none;"></div>
+            <div class="chat-header" style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px;">
+                <div class="header-info" style="display:flex; align-items:center; gap:10px;">
+                    <div class="bot-avatar" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" width="40" height="40">
+                            <path d="M12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2Z" fill="url(#grad1)"/>
+                            <defs>
+                                <linearGradient id="grad1" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                    <stop stop-color="#7C3AED"/>
+                                    <stop offset="1" stop-color="#4F46E5"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
                     </div>
                     <span>Assistente ROA</span>
                 </div>
-                <button id="roa-close-chat">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                <button id="roa-close-chat" aria-label="Fechar chat" style="background:none; border:none; cursor:pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
                 </button>
             </div>
 
-            <div id="roa-chat-messages">
-                <div class="message system">
-                    <div class="content">Olá! Eu sou o assistente acadêmico da ROA. Como posso te ajudar hoje?</div>
-                </div>
-            </div>
+            <div id="roa-chat-messages" style="padding: 16px; max-height: 420px; overflow:auto;"></div>
 
-            <div class="chat-input-area">
-                <textarea id="roa-user-input" placeholder="Digite sua dúvida..." rows="1"></textarea>
-                <button id="roa-send-btn">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <div class="chat-input-area" style="display:flex; gap:8px; padding:12px;">
+                <textarea id="roa-user-input" placeholder="Digite sua dúvida..." rows="1" style="flex:1; padding:8px; border-radius:8px; border:1px solid #e2e8f0;"></textarea>
+                <button id="roa-send-btn" title="Enviar" aria-label="Enviar mensagem" style="background:none; border:none; cursor:pointer;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- libs + chat logic -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="chat.js"></script>
+
+    <script>
+        // Config
+        const API_BASE = 'http://localhost:8000/ROA';
+        const token = localStorage.getItem("roa_token");
+
+        // checagem de autenticação (coloca replace para não poluir o histórico)
+        if (!token) {
+            window.location.replace('auth.html');
+        }
+
+        // mostrar nome do usuário se disponível (opcional)
+        const userDisplay = document.getElementById('user-display');
+        const storedName = localStorage.getItem('roa_user_name');
+        if (storedName) {
+            userDisplay.textContent = storedName;
+        } else {
+            // fallback rápido: tentar extrair email salvo
+            const storedEmail = localStorage.getItem('roa_user_email');
+            userDisplay.textContent = storedEmail ? storedEmail : 'Usuário';
+        }
+
+        function logout() {
+            localStorage.removeItem('roa_token');
+            // opcional: remover campos de usuário locais
+            localStorage.removeItem('roa_user_name');
+            localStorage.removeItem('roa_user_email');
+            window.location.replace('auth.html');
+        }
+
+        // Finalizar -> ir para feedback.html
+        document.getElementById('finalize-btn').addEventListener('click', () => {
+            // se quiser validar algo antes, colocar aqui
+            window.location.href = 'feedback.html';
+        });
+
+        // Nota: removi a lógica de carregar histórico daqui (era só para dev).
+        // O chat.js permanece responsável por abrir/fechar o widget e enviar mensagens.
+    </script>
 </body>
+
 </html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ROA Platform - Feedback</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+:root {
+--primary-gradient: linear-gradient(135deg,#7C3AED 0%,#4F46E5 100%);
+--glass: rgba(255,255,255,0.7);
+--glass-border: rgba(255,255,255,0.4);
+}
+
+body{
+font-family:'Inter',sans-serif;
+background:linear-gradient(135deg,#f1f5f9 0%,#e2e8f0 100%);
+margin:0;
+min-height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+nav{
+padding:20px 40px;
+background:var(--glass);
+backdrop-filter:blur(10px);
+border-bottom:1px solid var(--glass-border);
+display:flex;
+justify-content:space-between;
+align-items:center;
+}
+
+.logo{
+font-size:20px;
+font-weight:700;
+background:var(--primary-gradient);
+-webkit-background-clip:text;
+-webkit-text-fill-color:transparent;
+}
+
+main{
+flex:1;
+display:flex;
+justify-content:center;
+align-items:center;
+padding:40px;
+}
+
+.card{
+
+width:100%;
+max-width:600px;
+
+background:var(--glass);
+backdrop-filter:blur(10px);
+border:1px solid var(--glass-border);
+border-radius:24px;
+
+padding:40px;
+
+box-shadow:0 10px 30px rgba(0,0,0,0.05);
+text-align:center;
+}
+
+h2{
+margin-top:0;
+color:#1e293b;
+}
+
+p{
+color:#64748b;
+}
+
+textarea{
+
+width:100%;
+min-height:120px;
+
+padding:14px;
+
+border-radius:12px;
+border:1px solid #e2e8f0;
+
+resize:vertical;
+font-family:inherit;
+font-size:14px;
+
+margin-top:15px;
+}
+
+.btn{
+
+margin-top:20px;
+
+background:var(--primary-gradient);
+color:white;
+
+border:none;
+padding:14px 18px;
+
+border-radius:12px;
+
+font-weight:600;
+font-size:15px;
+
+cursor:pointer;
+
+width:100%;
+}
+
+.btn-secondary{
+
+margin-top:10px;
+
+background:white;
+border:1px solid #e2e8f0;
+color:#475569;
+
+}
+
+.success{
+
+margin-top:15px;
+color:#10b981;
+font-size:14px;
+display:none;
+
+}
+
+.btn-logout{
+
+background:transparent;
+color:#ef4444;
+border:1px solid #ef4444;
+
+padding:8px 16px;
+
+border-radius:8px;
+cursor:pointer;
+
+font-size:14px;
+font-weight:600;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<nav>
+
+<div class="logo">ROA Platform</div>
+
+<div style="display:flex;align-items:center;gap:20px;">
+
+<span id="user-display" style="color:#475569;font-weight:500;">Usuário</span>
+
+<button class="btn-logout" onclick="logout()">Sair</button>
+
+</div>
+
+</nav>
+
+<main>
+
+<div class="card">
+
+<h2>Feedback do Teste</h2>
+
+<p>Obrigado por participar do teste. Sua opinião ajuda a melhorar o assistente.</p>
+
+<form id="feedback-form">
+
+<textarea
+id="feedback-text"
+placeholder="Conte como foi sua experiência com o assistente..."
+required
+></textarea>
+
+<button class="btn" type="submit">
+Enviar Feedback
+</button>
+
+</form>
+
+<div id="success-msg" class="success">
+Feedback enviado com sucesso. Obrigado!
+</div>
+
+<button
+class="btn btn-secondary"
+onclick="voltarDashboard()"
+>
+Voltar ao Dashboard
+</button>
+
+</div>
+
+</main>
+
+<script>
+
+const API_BASE = "http://localhost:8000/ROA"
+
+const token = localStorage.getItem("roa_token")
+
+if(!token){
+
+window.location.replace("auth.html")
+
+}
+
+function logout(){
+
+localStorage.removeItem("roa_token")
+
+window.location.href="auth.html"
+
+}
+
+function voltarDashboard(){
+
+window.location.href="index.html"
+
+}
+
+document.getElementById("feedback-form").addEventListener("submit",async(e)=>{
+
+e.preventDefault()
+
+const text = document.getElementById("feedback-text").value
+
+try{
+
+await fetch(`${API_BASE}/feedback`,{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+"Authorization":`Bearer ${token}`
+},
+
+body:JSON.stringify({
+feedback:text
+})
+
+})
+
+document.getElementById("success-msg").style.display="block"
+
+document.getElementById("feedback-text").value=""
+
+}catch(err){
+
+console.error("Erro ao enviar feedback",err)
+
+}
+
+})
+
+</script>
+
+</body>
+</html>
