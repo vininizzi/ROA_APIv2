@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ROA - Iniciar Teste</title>
+    <title>BRAIN AI - Iniciar Sessão</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -126,8 +126,8 @@
 
 <body>
     <div class="card">
-        <div class="logo">ROA Platform</div>
-        <p class="subtitle">Assistente de Orientação Acadêmica</p>
+        <div class="logo">BRAIN AI</div>
+        <p class="subtitle">Seu assistente inteligente</p>
 
         <form id="start-form">
             <label for="user-name">Informe seu nome para começar</label>
@@ -142,8 +142,43 @@
     <script>
         const BASE_URL = 'http://localhost:8000/ROA';
 
+        // Cookie Helpers
+        function setCookie(name, value, days = 7) {
+            let expires = "";
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+        }
+
+        function getCookie(name) {
+            const nameEQ = name + "=";
+            const ca = document.cookie.split(';');
+            for (let i = 0; i < ca.length; i++) {
+                let c = ca[i];
+                while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+            }
+            return null;
+        }
+
         // Already logged in? Go to dashboard.
-        const existingToken = localStorage.getItem('roa_token');
+        let existingToken = getCookie('roa_token');
+
+        // Sincronização e fallback para evitar loops com cache de navegadores
+        if (!existingToken) {
+            existingToken = localStorage.getItem('roa_token');
+            if (existingToken) {
+                setCookie('roa_token', existingToken);
+                const lsName = localStorage.getItem('roa_user_name');
+                if (lsName) setCookie('roa_user_name', lsName);
+            }
+        } else {
+            localStorage.setItem('roa_token', existingToken);
+        }
+
         if (existingToken) {
             window.location.replace('index.html');
         }
@@ -174,6 +209,9 @@
                 const data = await res.json();
 
                 if (res.ok && data.access_token) {
+                    setCookie('roa_token', data.access_token);
+                    setCookie('roa_user_name', name);
+                    // Salvar no localStorage também caso o index.html esteja em cache
                     localStorage.setItem('roa_token', data.access_token);
                     localStorage.setItem('roa_user_name', name);
                     window.location.replace('index.html');

@@ -37,35 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const BASE_URL = 'http://localhost:8000/ROA';
     const API_URL = `${BASE_URL}/chat`;
     const LOGIN_URL = `${BASE_URL}/login`;
-
-    // Cookie Helpers
-    function setCookie(name, value, days = 7) {
-        let expires = "";
-        if (days) {
-            const date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            expires = "; expires=" + date.toUTCString();
-        }
-        document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
-    }
-
-    function getCookie(name) {
-        const nameEQ = name + "=";
-        const ca = document.cookie.split(';');
-        for (let i = 0; i < ca.length; i++) {
-            let c = ca[i];
-            while (c.charAt(0) == ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-        }
-        return null;
-    }
-
-    function eraseCookie(name) {
-        document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
-    }
-
     let conversationId = null;
-    let token = getCookie('roa_token');
+    let token = localStorage.getItem('roa_token');
 
     const isIframe = window.self !== window.top;
 
@@ -118,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok && data.access_token) {
                 token = data.access_token;
-                setCookie('roa_token', token);
+                localStorage.setItem('roa_token', token);
                 emailInput.value = '';
                 passwordInput.value = '';
                 checkAuth();
@@ -224,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.status === 401) {
                 token = null;
-                eraseCookie('roa_token');
+                localStorage.removeItem('roa_token');
                 checkAuth();
                 messagesContainer.removeChild(loadingDiv);
                 return;

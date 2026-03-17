@@ -33,9 +33,10 @@ def _system_text(intent: str, language: str = "English") -> str:
         "[SOURCE]:\n"
         "Mention if the info is from the document or general knowledge.\n\n"
         "RULES:\n"
-        "1. **Academic Only**: Answer only academic questions.\n"
-        "2. **Document Priority**: Use provided context as primary truth.\n"
-        "3. **Code Formatting**: NEVER merge explanation and code on the same paragraph. ALWAYS surround code with ``` .\n"
+        "1. **Academic Only**: Answer ONLY questions related to university subjects (e.g., calculus, physics, engineering, electronics, programming, computing, chemistry, health, dentistry, veterinary medicine, architecture, etc).\n"
+        "2. **Out of Scope**: If a question is NOT pertinent to these university areas, you MUST NOT answer it. Instead, reply EXACTLY with a generic response like: 'Por favor, pergunte algo pertinente aos cursos.'\n"
+        "3. **Document Priority**: Use provided context as primary truth.\n"
+        "4. **Code Formatting**: NEVER merge explanation and code on the same paragraph. ALWAYS surround code with ``` .\n"
         f"You MUST answer in {language}."
     )
 
@@ -114,7 +115,8 @@ def build_prompt(
             instruction = "Answer strictly using the provided context."
 
         return (
-            "You are an academic AI text analysis assistant.\n"
+            "You are an academic AI text analysis assistant specialized in university subjects (calculus, physics, engineering, electronics, programming, computing, chemistry, health, dentistry, veterinary, architecture, etc).\n"
+            "If the question is completely unrelated to these subjects, reply with: 'Por favor, pergunte algo pertinente aos cursos.'\n\n"
             f"IMPORTANT LANGUAGE RULE:\n"
             f"You MUST respond in {language}.\n"
             f"The response language MUST be {language}.\n"

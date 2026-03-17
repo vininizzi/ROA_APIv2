@@ -162,10 +162,11 @@ body {
 
 .message.system {
     align-self: flex-start;
-    background: white;
-    color: var(--text-primary);
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
     border-bottom-left-radius: 2px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .message.user {

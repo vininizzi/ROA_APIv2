@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ROA Platform - Dashboard</title>
+    <title>BRAIN AI - Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
@@ -52,6 +52,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             gap: 24px;
         }
 
@@ -160,6 +161,7 @@
             border-radius: 24px;
             padding: 32px 40px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+            text-align: center;
         }
 
         .intro-section h1 {
@@ -214,56 +216,12 @@
         #roa-upload-btn:hover {
             color: #7C3AED;
         }
-
-        /* demo iframe overlay */
-        #demo-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(15, 23, 42, 0.55);
-            z-index: 9000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            backdrop-filter: blur(4px);
-            transition: opacity 0.2s;
-        }
-
-        #demo-overlay.hidden {
-            display: none;
-        }
-
-        #demo-overlay iframe {
-            width: 1060px;
-            max-width: 96vw;
-            height: 86vh;
-            border-radius: 20px;
-            border: none;
-            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.35);
-        }
-
-        #demo-close {
-            position: absolute;
-            top: 20px;
-            right: 24px;
-            background: white;
-            border: none;
-            border-radius: 50%;
-            width: 36px;
-            height: 36px;
-            font-size: 20px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-            color: #475569;
-        }
     </style>
 </head>
 
 <body>
     <nav>
-        <div class="logo">ROA Platform</div>
+        <div class="logo">BRAIN AI</div>
         <div style="display: flex; align-items: center; gap: 20px;">
             <span id="user-display">Usuário</span>
             <button class="btn-logout" onclick="logout()">Sair</button>
@@ -273,12 +231,11 @@
     <main>
         <!-- Intro Section -->
         <section class="intro-section">
-            <h1>Olá! Sou o Brain Bot 🤖</h1>
-            <p>Seu agente auxiliar nos estudos — estou aqui para ajudar com dúvidas acadêmicas, análise de documentos e
+            <h1>Olá! Sou o BRAIN AI 🤖</h1>
+            <p>Seu agente inteligente — estou aqui para ajudar com dúvidas, análise de documentos e
                 muito mais. Abra o chat no canto inferior direito para começar.</p>
-            <p style="margin-bottom:12px;">Veja como o Brain Bot se integra em portais de e-learning externos:</p>
-            <a class="btn-link" href="#"
-                onclick="document.getElementById('demo-overlay').classList.remove('hidden'); return false;">
+            <p style="margin-bottom:12px;">Veja como o BRAIN AI se integra em portais externos:</p>
+            <a class="btn-link" href="demo.html">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
                     stroke-linecap="round" stroke-linejoin="round">
                     <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
@@ -331,7 +288,7 @@
                             </defs>
                         </svg>
                     </div>
-                    <span>Assistente ROA</span>
+                    <span>BRAIN AI</span>
                 </div>
                 <button id="roa-close-chat" aria-label="Fechar chat"
                     style="background:none; border:none; cursor:pointer;">
@@ -369,58 +326,93 @@
                 </button>
             </div>
         </div>
-    </div>
+        <!-- libs + chat logic -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+        <script src="chat.js"></script>
 
-    <!-- Demo Overlay (escola demo) -->
-    <div id="demo-overlay" class="hidden">
-        <button id="demo-close" onclick="document.getElementById('demo-overlay').classList.add('hidden')"
-            aria-label="Fechar demo">✕</button>
-        <iframe src="test_iframe.html" title="EduPortal – demo de integração"></iframe>
-    </div>
+        <script>
+            // Cookie Helpers
+            function getCookie(name) {
+                const nameEQ = name + "=";
+                const ca = document.cookie.split(';');
+                for (let i = 0; i < ca.length; i++) {
+                    let c = ca[i];
+                    while (c.charAt(0) == ' ') c = c.substring(1, c.length);
+                    if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
+                }
+                return null;
+            }
 
-    <!-- libs + chat logic -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/11.1.1/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script src="chat.js"></script>
+            function eraseCookie(name) {
+                document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT; SameSite=Lax';
+            }
 
-    <script>
-        // Config
-        const API_BASE = 'http://localhost:8000/ROA';
-        const token = localStorage.getItem("roa_token");
+            function setCookie(name, value, days = 7) {
+                let expires = "";
+                if (days) {
+                    const date = new Date();
+                    date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                    expires = "; expires=" + date.toUTCString();
+                }
+                document.cookie = name + "=" + (value || "") + expires + "; path=/; SameSite=Lax";
+            }
 
-        // checagem de autenticação (coloca replace para não poluir o histórico)
-        if (!token) {
-            window.location.replace('auth.html');
-        }
+            // Config
+            const API_BASE = 'http://localhost:8000/ROA';
+            let token = getCookie("roa_token");
 
-        // mostrar nome do usuário se disponível (opcional)
-        const userDisplay = document.getElementById('user-display');
-        const storedName = localStorage.getItem('roa_user_name');
-        if (storedName) {
-            userDisplay.textContent = storedName;
-        } else {
-            // fallback rápido: tentar extrair email salvo
-            const storedEmail = localStorage.getItem('roa_user_email');
-            userDisplay.textContent = storedEmail ? storedEmail : 'Usuário';
-        }
+            // Sincronização e fallback para evitar loops com cache de navegadores
+            if (!token) {
+                token = localStorage.getItem("roa_token");
+                if (token) {
+                    setCookie("roa_token", token);
+                    const lsName = localStorage.getItem('roa_user_name');
+                    if (lsName) setCookie('roa_user_name', lsName);
+                    const lsEmail = localStorage.getItem('roa_user_email');
+                    if (lsEmail) setCookie('roa_user_email', lsEmail);
+                }
+            } else {
+                localStorage.setItem("roa_token", token);
+                const cookieName = getCookie('roa_user_name');
+                if (cookieName) localStorage.setItem("roa_user_name", cookieName);
+            }
 
-        function logout() {
-            localStorage.removeItem('roa_token');
-            // opcional: remover campos de usuário locais
-            localStorage.removeItem('roa_user_name');
-            localStorage.removeItem('roa_user_email');
-            window.location.replace('auth.html');
-        }
+            // checagem de autenticação (coloca replace para não poluir o histórico)
+            if (!token) {
+                window.location.replace('auth.html');
+            }
 
-        // Finalizar -> ir para feedback.html
-        document.getElementById('finalize-btn').addEventListener('click', () => {
-            // se quiser validar algo antes, colocar aqui
-            window.location.href = 'feedback.html';
-        });
+            // mostrar nome do usuário se disponível (opcional)
+            const userDisplay = document.getElementById('user-display');
+            const storedName = getCookie('roa_user_name');
+            if (storedName) {
+                userDisplay.textContent = storedName;
+            } else {
+                // fallback rápido: tentar extrair email salvo
+                const storedEmail = getCookie('roa_user_email');
+                userDisplay.textContent = storedEmail ? storedEmail : 'Usuário';
+            }
 
-        // Nota: removi a lógica de carregar histórico daqui (era só para dev).
-        // O chat.js permanece responsável por abrir/fechar o widget e enviar mensagens.
-    </script>
+            function logout() {
+                eraseCookie('roa_token');
+                eraseCookie('roa_user_name');
+                eraseCookie('roa_user_email');
+                localStorage.removeItem('roa_token');
+                localStorage.removeItem('roa_user_name');
+                localStorage.removeItem('roa_user_email');
+                window.location.replace('auth.html');
+            }
+
+            // Finalizar -> ir para feedback.html
+            document.getElementById('finalize-btn').addEventListener('click', () => {
+                // se quiser validar algo antes, colocar aqui
+                window.location.href = 'feedback.html';
+            });
+
+            // Nota: removi a lógica de carregar histórico daqui (era só para dev).
+            // O chat.js permanece responsável por abrir/fechar o widget e enviar mensagens.
+        </script>
 </body>
 
 </html>
