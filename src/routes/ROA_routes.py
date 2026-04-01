@@ -16,12 +16,12 @@ logger = logging.getLogger("ROA")
 
 ROA_router = APIRouter(prefix="/ROA", tags=["ROA"])
 
-UPLOAD_DIR = (
-    "/home/brain/projects/RAG para PDFs/"
-    "RAG com OCR do Vini/"
-    "ROA - RAG com OCR Academico/"
-    "Documentos/uploads"
-)
+#UPLOAD_DIR = (
+#    "/home/brain/projects/RAG para PDFs/"
+#    "RAG com OCR do Vini/"
+#    "ROA - RAG com OCR Academico/"
+#    "Documentos/uploads"
+#)
 
 from core.security import get_current_user
 from models.users_model import User

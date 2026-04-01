@@ -1,7 +1,7 @@
 import os
 import logging
 from typing import List, Optional
-
+from pathlib import Path
 from langchain_core.documents import Document
 from langchain_community.vectorstores import FAISS
 from langchain_community.embeddings import HuggingFaceEmbeddings
@@ -34,28 +34,50 @@ def get_embeddings() -> HuggingFaceEmbeddings:
 
 # ================= LOAD / SAVE =================
 
+def create_vectorstore() -> FAISS:
+    """
+    Cria um vectorstore inicial (placeholder) para evitar erros
+    quando não há documentos ingeridos.
+    """
+    logger.info("🧠 [CREATE] Gerando vectorstore placeholder...")
+    embeddings = get_embeddings()
+    
+    docs = [
+        Document(
+            page_content="Vectorstore inicializado. Aguardando a ingestão de documentos.",
+            metadata={"source": "system", "init": True}
+        )
+    ]
+    
+    vectorstore = FAISS.from_documents(docs, embeddings)
+    return vectorstore
+
 def load_vectorstore() -> Optional[FAISS]:
-    """
-    Carrega o vectorstore do disco na inicialização.
-    """
     global _vectorstore
 
     if _vectorstore is not None:
-        logger.debug("📦 Vectorstore já carregado em memória")
         return _vectorstore
 
-    if not os.path.exists(FAISS_DIR):
-        logger.warning("📦 Nenhum FAISS index encontrado em disco")
-        return None
+    faiss_path = Path(FAISS_DIR)
+    index_file = faiss_path / "index.pkl"
 
     embeddings = get_embeddings()
-    _vectorstore = FAISS.load_local(
-        FAISS_DIR,
-        embeddings,
-        allow_dangerous_deserialization=True
-    )
 
-    logger.info("📦 Vectorstore carregado do disco")
+    if index_file.exists():
+        _vectorstore = FAISS.load_local(
+            faiss_path,
+            embeddings,
+            allow_dangerous_deserialization=True
+        )
+        logger.info("📦 Vectorstore carregado")
+    else:
+        logger.warning("⚠️ Index não encontrado. Criando novo...")
+
+        _vectorstore = create_vectorstore()  # <- você precisa ter isso
+        _vectorstore.save_local(faiss_path)
+
+        logger.info("✅ Novo vectorstore criado e salvo")
+
     return _vectorstore
 
 
