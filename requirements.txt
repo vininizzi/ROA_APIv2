@@ -22,14 +22,16 @@ python-multipart==0.0.21
 requests==2.32.5
 
 # LLM / orchestration
-openai==2.15.0
-ollama==0.6.1
-langchain==1.2.2
-langchain-community==0.4.1
-langchain-core==1.2.6
-langchain-text-splitters==1.1.0
-langgraph==1.0.5
-langsmith==0.6.1
+openai>=1.50.0
+ollama>=0.3.0
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-core>=0.2.0
+langchain-openai>=0.1.0
+langchain-text-splitters>=0.2.0
+langgraph>=0.1.0
+langsmith>=0.1.0
+
 
 # Embeddings / transformers
 transformers==4.57.3
