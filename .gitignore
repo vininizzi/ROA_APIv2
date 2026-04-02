@@ -213,4 +213,5 @@ __marimo__/
 
 # Project
 *.pkl
-src/ROA/data/
+src/ROA/data/*.faiss
+src/ROA/data/faiss_index/
